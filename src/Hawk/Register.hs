@@ -8,6 +8,7 @@ data Reg
   = PC
   | SpecPC
   | Other
+  deriving (Eq,Show)
 
 class Register a where
   -- | Is the register read only.
