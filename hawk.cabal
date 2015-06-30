@@ -1,5 +1,5 @@
 name:                hawk
-version:             0.1.0.0
+version:             0.1
 synopsis:            Haskell for Microprocessor Specifications
 description:         A reimplementation of http://web.archive.org/web/20070923041730/http://www.cse.ogi.edu/PacSoft/Hawk/
                      Using modern GHC/Haskell extensions where appropriate.
