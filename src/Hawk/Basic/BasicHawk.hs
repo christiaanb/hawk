@@ -3,10 +3,12 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
+
 module Hawk.Basic.BasicHawk
   ( -- * Types
     Signal
   , Transaction (..)
+  , Instruction (..)
   , Cell
   , DestCell
   , Src1Cell
@@ -41,6 +43,7 @@ module Hawk.Basic.BasicHawk
   , aluTrans
   , memTrans
   , nopTrans
+  , instrToTrans
   -- * Pipeline Components
   , hiAddr
   , delayTrans
@@ -72,6 +75,8 @@ import Hawk.Basic.ISA
 -- operand information is incrementally filled in.
 data Transaction = Trans DestCell Opcode Src1Cell Src2Cell
   deriving (Show,Eq)
+
+data Instruction = Instr RegName Opcode RegName RegName
 
 -- | A Cell contains known information regarding a register's value, relative
 -- to the transaction it is a part of.
@@ -292,3 +297,6 @@ removeMemInstrs
     remTrans trans = if isMemTrans trans
                         then nopTrans
                         else trans
+
+instrToTrans :: Instruction -> Transaction
+instrToTrans (Instr dst op src1 src2) = Trans (Cell dst Nothing) op (Cell src1 Nothing) (Cell src2 Nothing)
