@@ -19,6 +19,8 @@ imp2Pipe input = writeback
 
 topEntity = imp2Pipe
 
+-- Altera Cyclone V SoC 5CSXFC6DCF31C8ES
+--
 -- ALM: 1345
 -- Reg: 1738
 -- DSP: 3
