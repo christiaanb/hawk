@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, TypeOperators #-}
+{-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 module Hawk.Trans where
 
 import Data.Default       (Default (..))

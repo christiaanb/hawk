@@ -21,8 +21,8 @@ module Hawk.Basic.BasicHawk
   , liftA3
   , signal
   , (.==.)
-  , bundle'
-  , unbundle'
+  , bundle
+  , unbundle
   , register
   -- * Environment operations
   , repeat
@@ -55,7 +55,7 @@ where
 
 import Control.Applicative (liftA2,liftA3)
 import CLaSH.Promoted.Nat  (SNat)
-import CLaSH.Signal        (Signal,(.==.),bundle',register,signal,unbundle')
+import CLaSH.Signal        (Signal,(.==.),bundle,register,signal,unbundle)
 import CLaSH.Sized.Signed  (Signed)
 import CLaSH.Sized.Vector  (Vec,(!!),replace,repeat)
 import Data.Functor        (fmap)
@@ -103,7 +103,7 @@ readEnv e i = e !! (fromEnum i)
 
 -- | Extends the given environment by overwriting the associated binding.
 extEnv :: (Enum a, KnownNat (Elems a)) => Env a b -> a -> b -> Env a b
-extEnv v i = replace v (fromEnum i)
+extEnv v i a = replace i a v
 
 -- | @getCellName@ retrieves the @registerName@ field of the cell
 getCellName :: Cell -> RegName
@@ -260,7 +260,7 @@ mem :: Signal Transaction -> Signal Transaction
 mem input
   = out
   where
-    (mem,out) = unbundle' (liftA2 memTrans (register initMem mem) input)
+    (mem,out) = unbundle (liftA2 memTrans (register initMem mem) input)
     initMem   = repeat 0
 
 -- | Bypass pipeline component
