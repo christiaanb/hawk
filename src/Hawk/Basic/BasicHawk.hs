@@ -58,11 +58,12 @@ where
 
 import Control.Applicative (liftA2,liftA3)
 import CLaSH.Promoted.Nat  (SNat)
+import CLaSH.Promoted.Ord  (Min)
 import CLaSH.Signal        (Signal,(.==.),bundle,register,signal,unbundle)
 import CLaSH.Sized.Signed  (Signed)
 import CLaSH.Sized.Vector  (Vec,(!!),replace,repeat)
 import Data.Functor        (fmap)
-import GHC.TypeLits        (KnownNat,Nat,type (^))
+import GHC.TypeLits        (KnownNat,Nat,type (^), type (-))
 import Prelude             hiding ((!!),repeat)
 
 import Data.Proxy
@@ -89,7 +90,7 @@ type Src2Cell = Cell
 
 type family Elems a :: Nat
 type instance Elems RegName    = 8
-type instance Elems (Signed n) = 2^n
+type instance Elems (Signed n) = Min 32 (2^n)
 
 -- | This type implements register files and memories using fixed size vectors
 type Env a b = Vec (Elems a) b
