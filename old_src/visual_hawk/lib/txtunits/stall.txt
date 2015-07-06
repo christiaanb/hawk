@@ -1,0 +1,4 @@
+stall :: Signal PipeRegCmd
+
+Emits the constant Stall each clock tick. Indicates that a pipeline register should
+retain its contents.

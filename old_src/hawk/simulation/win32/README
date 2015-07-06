@@ -1,0 +1,5 @@
+Windows compatability kit -- README
+
+This directory contains batch files that fire up the Hawk bourne
+shell scripts with Cygnus's cygwin UNIX tools.  See ../doc/README.WINDOWS
+for more information

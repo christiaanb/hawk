@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     echo "HAWKROOT environment variable not set"
+     exit
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+
+. $HAWKROOT/simulation/bin/common
+
+
+exec $RUNHUGS -w -P"::$HAWKLIB:$DLXLIB:$OA64LIB" $HUGSARGS $*

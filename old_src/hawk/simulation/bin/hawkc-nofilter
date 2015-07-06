@@ -1,0 +1,26 @@
+#!/bin/sh 
+
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     echo "HAWKROOT environment variable not set"
+     exit
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+
+. $HAWKROOT/simulation/bin/common
+
+TMPF="$TDIR/hawk$$.sh"
+$GHC $OPTFLAGS -i$HAWKLIB -i$DLXLIB -i$OA64LIB \
+    -L$HAWKLIB -L$DLXLIB -L$OA64LIB $* -lhawk -ldlx -loa64 -lhawk 2> $TMPF
+st=$?
+
+
+$RM -f $TMPF
+exit $st
+
+

@@ -1,0 +1,2 @@
+* a branch instruction must be a the end of a packet
+* branches can only jump to the beginnings of packets

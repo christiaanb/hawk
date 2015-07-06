@@ -1,0 +1,33 @@
+[ uuid(C0EA2BF4-AFD1-11D2-B49F-006008D1BF8C) 
+, helpstring("VisualHawk type library")
+, version(1.0)
+]
+library VisualHawkLib
+{
+
+importlib("stdole.tlb");
+
+[ uuid(C0EA2BF5-AFD1-11D2-B49F-006008D1BF8C) 
+, helpstring("VisualHawk interface")
+]
+dispinterface IVisualHawk
+{  
+   properties:
+      [id(1),readonly] BSTR VersionString;
+   methods:
+      [id(2)] void GenHawk([in] BSTR path, [in] VARIANT_BOOL* probes);
+      [id(3)] void CheckWire(void);
+      [id(4)] void UpdateMenu(void);
+      [id(5)] void ReWriteWith([in] BSTR ruleName);
+};
+
+
+[ uuid(C0EA2BF3-AFD1-11D2-B49F-006008D1BF8C)
+, helpstring("Visual Hawk class")
+]
+coclass VisualHawk
+{
+  [default] dispinterface IVisualHawk;
+};
+
+};

@@ -1,0 +1,12 @@
+
+reorderBuffer :: Register reg => 
+
+  (Signal [Trans reg],                 -- input transactions
+   Signal [Trans (Virtual reg)])       -- evaluated transactions
+ 
+                    -> 
+
+  (Signal [Trans reg],                 -- retired transactions
+   Signal [Trans (Virtual reg)],       -- ready for execution
+   Signal Int,                         -- number of ROB free slots
+   Signal Bool)                        -- speculation exception

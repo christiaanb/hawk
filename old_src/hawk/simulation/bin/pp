@@ -1,0 +1,24 @@
+#!/bin/sh 
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     try=`dirname $0`/../..
+     if [ x$try = x ] ; then
+	 echo "HAWKROOT environment variable not set"
+	 exit
+     fi
+     if [ ! -e $try/simulation ]; then
+	 echo "HAWKROOT environment variable not set"
+	 exit
+     fi
+     HAWKROOT=$try
+     export HAWKROOT
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+. $HAWKROOT/simulation/bin/common
+
+$GCC -x c -E -P -traditional -include $HAWKROOT/simulation/lib/hawk-macros.h $1

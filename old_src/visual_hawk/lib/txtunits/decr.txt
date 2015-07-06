@@ -1,0 +1,3 @@
+decr :: Signal Int -> Signal Int
+
+Subtracts 1 from the input.

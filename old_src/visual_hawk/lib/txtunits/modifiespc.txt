@@ -1,0 +1,1 @@
+modifiesPC :: Register a => Signal (Trans a) -> Signal Bool

@@ -1,0 +1,9 @@
+
+execution :: Register reg => 
+
+  (Signal Bool,                        -- Speculation exception
+   Signal [Trans (Virtual reg)])       -- Ready transactions
+
+     -> 
+
+   Signal [Trans (Virtual reg)]        -- Computed transactions

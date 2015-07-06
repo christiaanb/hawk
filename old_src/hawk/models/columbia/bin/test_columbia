@@ -1,0 +1,64 @@
+#!/bin/sh
+
+t1=`bin/test_fact 143 progs/f1.hsk`
+if [ $t1 -lt 1 ] ; then
+     echo "columbia failed on test1"
+     exit 1
+fi
+
+t2=`bin/test_predfact 143 progs/f2.hsk`
+if [ $t2 -lt 1 ] ; then
+     echo "columbia failed on test2"
+     exit 1
+fi
+
+t3=`bin/test_predfact 105 progs/f3.hsk`
+if [ $t3 -lt 1 ] ; then
+     echo "columbia failed on test3"
+     exit 1
+fi
+
+t4=`bin/test_predfact 147 progs/f4.hsk`
+if [ $t4 -lt 1 ] ; then
+     echo "columbia failed on test4"
+     exit 1
+fi
+
+t5=`bin/test_predfact 118 progs/f5.hsk`
+if [ $t5 -lt 1 ] ; then
+     echo "columbia failed on test5"
+     exit 1
+fi
+
+t6=`bin/test_predfact 84 progs/f6.hsk`
+if [ $t6 -lt 1 ] ; then
+     echo "columbia failed on test6"
+     exit 1
+fi
+
+t7=`bin/test_predfact 84 progs/f7.hsk`
+if [ $t7 -lt 1 ] ; then
+     echo "columbia failed on test7"
+     exit 1
+fi
+
+t8=`bin/test_predfact 85 progs/f8.hsk`
+if [ $t8 -lt 1 ] ; then
+     echo "columbia failed on test8"
+     exit 1
+fi
+
+t9=`bin/test_predfact 85 progs/f9.hsk`
+if [ $t9 -lt 1 ] ; then
+     echo "columbia failed on test9"
+     exit 1
+fi
+
+m2=`bin/test_mem 30 progs/mem2.hsk`
+if [ $m2 -lt 1 ] ; then
+     echo "columbia failed on memory2"
+     exit 1
+fi
+
+
+echo "columbia passed"

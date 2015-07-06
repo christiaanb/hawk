@@ -1,0 +1,8 @@
+cp template.bat assm-oa64.bat
+cp template.bat hawk-nofilter.bat
+cp template.bat hawk.bat
+cp template.bat hawkc-nofilter.bat
+cp template.bat hawkc.bat
+cp template.bat mkdependHawk.bat
+cp template.bat runhawk-nofilter.bat
+cp template.bat runhawk.bat

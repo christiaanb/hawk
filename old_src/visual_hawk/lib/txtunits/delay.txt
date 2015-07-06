@@ -1,0 +1,3 @@
+delay :: Default a => Signal a -> Signal a
+
+A one-tick register. The output is delayed by a single clock tick. The initial value is the default value for that type (0 for Integers, Nop for Transactions etc.)

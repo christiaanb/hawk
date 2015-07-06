@@ -1,0 +1,3 @@
+sOR :: Signal Bool -> Signal Bool -> Signal Bool
+
+Or gate.

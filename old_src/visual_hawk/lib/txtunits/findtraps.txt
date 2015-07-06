@@ -1,0 +1,3 @@
+findTraps :: Signal DLXTrans -> Signal DLXTrans
+
+Terminates its clocked output when a trapping transaction is received.

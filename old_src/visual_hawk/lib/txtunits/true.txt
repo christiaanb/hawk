@@ -1,0 +1,3 @@
+true :: Signal Bool
+
+Emits the constant True on each clock cycle.

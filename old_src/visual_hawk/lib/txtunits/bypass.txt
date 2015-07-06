@@ -1,0 +1,4 @@
+bypass :: Register a => 
+   Signal (Trans a) -> Signal (Trans a) -> Signal (Trans a)
+
+The first argument is conditionally updated by the second when the destination register of the second is a source argument of the first. The value for the source argument is replaced.

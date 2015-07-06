@@ -1,0 +1,23 @@
+#!/bin/sh 
+
+TMP="/tmp/hawk$$.sh"
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     echo "HAWKROOT environment variable not set"
+     exit
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+
+. $HAWKROOT/simulation/bin/common
+
+$HAWKROOT/simulation/bin/make2sh $HAWKCONFIG > $TMP
+. $TMP
+rm -f $TMP
+
+$MKDEPEND -o hi -fglasgow-exts $*
+

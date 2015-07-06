@@ -1,0 +1,3 @@
+mux :: Signal Bool -> Signal a -> Signal a -> Signal a
+
+On each clock tick, if the boolean signal is True the content of the second input is selected, otherwise the content of the third is.

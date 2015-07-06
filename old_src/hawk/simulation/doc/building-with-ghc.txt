@@ -1,0 +1,14 @@
+*  Set the env. variable HAWKROOT
+
+
+*  the script "bin/makeall" in the root directory should build the
+   library and models.  If you don't want to build everything
+   then you can modify the script.
+
+
+*  By default, the distribution builds the libraries and models
+   with optimization flags on ---- meaning that a build will
+   take forever!  You can shut the flags off by re-defining
+     OPTSFLAGS=
+   in lib/Config.mk
+

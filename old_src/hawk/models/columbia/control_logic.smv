@@ -1,0 +1,29 @@
+module main(f_in_input,flushed,gt_k,fetch)
+{
+  input  f_in_input,flushed,gt_k: boolean;
+  output fetch                  : boolean;
+
+  fence : boolean;
+
+  init(fence) := 0 ;
+  next(fence) := (fence & ~flushed) | f_in_input ;
+
+  fetch := (~fence & gt_k); 
+  
+
+  P  : assert f_in_input -> (~fetch U (flushed  & gt_k));
+  P1 : assert fence -> (~fetch U flushed ); 
+  P2 : assert f_in_input -> fence;
+
+  /* ------- Environment ----------------------------------- */
+  F1 : assert flushed -> gt_k ; 
+  F2 : assert startup -> ~f_in_input ;
+
+  startup : boolean;
+  init(startup) := 1;
+  next(startup) := 0;
+  
+  using F1,F2 prove P,P1,P2;
+  assume F1,F2;
+
+}

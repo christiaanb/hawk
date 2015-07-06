@@ -1,0 +1,9 @@
+#note: the syntax of this file must be usable by both make and sh
+# don't pass arguments to the commands, just use pathnames
+RM=rm
+GCC=gcc
+SED=sed
+CAT=cat
+CP=cp
+SH=sh
+TDIR=/tmp

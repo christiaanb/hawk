@@ -1,0 +1,6 @@
+#!/bin/sh
+
+bin/simulate -sample $1 $2 \
+ | grep '\[Reg R3 (Val 5040)\] (ALU (Add Signed)) \[Reg R1 (Val 5040),Imm 0,Reg P3 (Val 1)\]' \
+ | wc -l
+

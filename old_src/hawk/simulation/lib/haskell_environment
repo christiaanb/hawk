@@ -1,0 +1,24 @@
+#the syntax of this file is pretty limited.  it is mildly converted
+# from make to sh format
+HUGS=hugs
+RUNHUGS=runhugs
+#HUGS=/Hugs-981111-gcc/bin/hugs.exe
+#RUNHUGS=/Hugs-981111-gcc/bin/runhugs.exe
+
+
+HC=ghc -fglasgow-exts
+GHC=${HC}
+MKDEPEND=mkdependHS
+
+#EDITOR=C:\\Program\ Files\\TextPad\\TXTPAD32.EXE %s(%d)
+EDITOR=vi +%d %s
+
+HAWKLIB=${HAWKROOT}/simulation/lib
+DLXLIB=${HAWKROOT}/simulation/dlx
+OA64LIB=${HAWKROOT}/simulation/oa-64
+
+
+FILTER_OPTS=-cpp -optP-imacros -optP${HAWKLIB}/hawk-macros.h
+#OPTFLAGS=-O -fvia-C -O2-for-C
+OPTFLAGS=
+

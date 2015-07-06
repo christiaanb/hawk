@@ -1,0 +1,312 @@
+                            How to Use Hawk 
+                            ~~~~~~~~~~~~~~~
+
+                              Byron Cook
+                           byron@cse.ogi.edu
+
+                      Fri May  8 08:08:32 PDT 1998
+
+Although our papers claim that Hawk is an independent language, currently the 
+reality is that Hawk is a library of Haskell modules.  For interactive 
+development the user uses Hawk in Hugs; for compilation the user uses GHC.
+
+In addition to Hawk, we have developed the DLX->Hawk toolkit, which allows 
+users to compile DLX (and C) programs to a Hawk data-type that represents a 
+generic RISC instruction set.
+
+This document describes how to use these tools.
+
+Preliminaries
+~~~~~~~~~~~~~
+This software was developed on and for UNIX.  To port to
+Windows or other OSs the scripts in the bin directory need to be re-written
+for the host system. The scripts are defined in terms of the following
+programs:
+	* sed
+	* cpp
+	* make
+        * find
+        * sh
+        * perl
+        * grep
+and combine these programs with pipes and file redirection.
+
+You will need either Hugs, or GHC -- preferably both.  Look at
+www.haskell.org for pointers to them.   Hugs provides ports for most
+machines, including UNIX flavors, NT, 95, and MacOS.  GHC is much more
+UNIX based, but I hear that it can be used on NT if some common UNIX tools
+are installed.
+
+Setting your environment variable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Be sure to set the $HAWKROOT environment variable to the location of your Hawk 
+distribution.  For example, at OGI we have it set as 
+
+     "/home/projects/pacsoft/hardware/hawk"
+
+Where things are
+~~~~~~~~~~~~~~~~
+To begin with, the important pieces are in $HAWKROOT and
+http://www.cse.ogi.edu/PacSoft/projects/Hawk/compile-to-hawkdlx.cgi
+
+The Hawk libraries are in $HAWKROOT/lib, the script "hawk" that starts Hugs 
+with the correct path variables is in $HAWKROOT/bin, some example models are in 
+$HAWKROOT/models, and documents are in $HAWKROOT/doc.   The C to Hawk 
+expression compiler, DLX to Hawk data-type assembler, and C to DLX compiler can 
+be accessed at
+
+      http://www.cse.ogi.edu/PacSoft/projects/Hawk/compile-to-hawkdlx.cgi
+
+How to use the tools
+~~~~~~~~~~~~~~~~~~~~
+
+   - Interactive Use -
+Lets begin with a Hawk specification in a file named "Biff.hs":
+
+  1)         module Biff where
+  2)         import Hawk
+  3)
+  4)         biff = constant 5
+
+An important thing to notice is that the filename and module name correspond.  
+Both Hugs and GHC will become confused if you don't maintain this correlation. 
+Another important detail is that, to use the Hawk library you must import it.  
+
+To begin the Hawk interpreter I type "hawk Biff" at the command line, and
+get:
+
+    paratha$ hawk Biff.hs 
+    Hugs 1.4, The Nottingham and Yale Haskell User's System. January 1998.
+    Copyright (c) The University of Nottingham and Yale University, 1994-1997.
+    Bug reports: hugs-bugs@haskell.org.   Web: http://www.haskell.org/hugs.
+ 
+    Reading file "/home/projects/.......":
+    Reading file "Biff.hs":
+    ....
+    ....
+    ....
+    ....
+    Biff>
+
+You can check the type of "biff" with the following command:
+
+    Biff>  :t biff
+    biff :: Signal Int
+
+or evaluate it with the command:
+
+    Biff>  biff
+    Sig [5,5,5,...........................................
+
+NOTE: Hawk uses Hugs' -F option to preprocess Hawk specification files.
+If your installation of Hugs doesn't support the -F command,
+you can use hawk-nofilter.  If your models use the "step" constructs, or
+other syntactic sugar, you can filter them out by hand with the "pp" 
+command.  For example:
+   mv Model.hs Model.hwk
+   pp Model.hwk > Model.hs
+   hawk-nofilter Model.hs
+
+
+     -- Compiling Hawk -- 
+
+To compile simple Hawk specifications you can use the command "hawkc" 
+from the UNIX shell.  However, due to incremental compilation and optimization 
+flags, you might want to develop your own Makefiles that call GHC 
+directly.   Be sure to look at the code within "hawkc".  
+
+The syntax for "hawkc" is the same as many C compilers.
+
+We can compile the above example by creating a "main" within a 
+"Main" module (in a file named Main.hs):
+
+    module Main where
+    import Hawk
+    import Biff
+ 
+    main = print biff
+
+and compiling with the following command:
+
+    hawkc Biff.hs Main.hs
+
+which produces an executable "a.out"
+
+
+
+-- C/DLX to Hawk --
+
+The compiler web-page (url given above) compiles C programs into a Hawk 
+expression.   The web-page can also perform the analogous translation from DLX 
+assembly files.
+
+Note:  you should not use #include in your C files, nor should you expect that 
+I/O will be handled correctly (unless your model supports OS features)
+
+NOTE: The compilers are hacks based on dlxgcc, dlxsim, and some other tools.   
+Basically c2hawk compiles C to DLX and then invokes dlx2hawk.  dlx2hawk loads 
+of a DLX assm. file into the dlxsim simulator, then dumps an image of the 
+simulated core into a file, which is then compressed with run-length encoding.  
+Its all very gruesome ......
+
+NOTE ALSO: DONT USE GLOBAL VARIABLES, like this:
+
+        int x = 2
+	main()
+        {
+		x++;
+	}
+
+The compiler/dlxsim don't agree on "where x should go" in memory ....
+        
+SECOND NOTE: DONT USE INITIALIZED VARIABLES, like:
+        main()
+        {
+	        int x = 2;
+                x++;
+        }
+
+this is better:
+        main()
+        {
+                int x;
+                x = 2;
+                x++;
+        }
+
+Again, this is because the compiler and assembler don't agree on how to handle 
+these.
+
+
+NOTE AGAIN:  You will often have to open up the .s file generated by the 
+compiler and modify things.  It just depends on how sophisticated your model 
+is....
+
+
+NOTE ONE MORE TIME: If you're at OGI, then you can access the compiler and 
+assembler directly:
+	/projects/pacsoft/hardware/bin/c2hawk
+	/projects/pacsoft/hardware/bin/dlx2hawk
+
+When given a file named "file.c", c2hawk will generate a "file.s" and 
+"file.hsk".  When given a file named "file.s", dlxc2hawk will generate a 
+"file.hsk".
+
+
+Building and Running a Model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you have GHC, then to build a simulator of the P6 model in 
+"$HAWKROOT/models/p6", you can type "make", which produces the executable file 
+"simulate". If you only have Hugs then you can make a script which invokes 
+"runhawk":
+
+	#!/bin/sh
+	runhawk Main $*
+    
+If you have HUGS, you can simulate the P6 model interactively by typing:
+
+	hawk Main
+       
+
+Assume that we have the following DLX assm. file "w.s":
+     L2:
+        add r11,r9,r9
+        add r28,r9,r9
+        sub r29,r9,r9
+        add r30,r9,r9
+        add r24,r9,r9
+        sub r25,r9,r9
+        add r26,r9,r9
+        sub r27,r9,r9
+        add r28,r9,r9
+        sub r29,r9,r9
+        add r30,r9,r9
+        sub r31,r9,r9
+        j L2
+     L3:
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+
+To generate a Hawk-Instr file we type the text into the web page, hit the 
+"submit" button, and save the result to "w.hsk"
+
+To run the simulator with the program we execute:
+
+	simulate w.hsk 
+
+or
+	runhawk Main w.hsk
+
+which then prints the transactions retired at each clock tick:
+     
+     []
+     []
+     [Trans [Reg R11 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (
+     Word 0))] [Loc (Word 256)], Trans [Reg R28 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (V
+     al (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 260)], Trans [Reg R29 (Val (Word 0))] (Exec
+     Op (Sub Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 264)]]
+     []
+     []
+     [Trans [Reg R30 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (
+     Word 0))] [Loc (Word 268)], Trans [Reg R24 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (V
+     al (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 272)], Trans [Reg R25 (Val (Word 0))] (Exec
+     Op (Sub Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 276)], Trans [Re
+     g R26 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] 
+     [Loc (Word 280)], Trans [Reg R27 (Val (Word 0))] (ExecOp (Sub Signed)) [Reg R9 (Val (Word 0
+     )), Reg R9 (Val (Word 0))] [Loc (Word 284)], Trans [Reg R28 (Val (Word 0))] (ExecOp (Add Si
+     gned)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 288)]]
+     [Trans [Reg R29 (Val (Word 0))] (ExecOp (Sub Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (
+     Word 0))] [Loc (Word 292)], Trans [Reg R30 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (V
+     al (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 296)], Trans [Reg R31 (Val (Word 0))] (Exec
+     Op (Sub Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 300)], Trans [Re
+     g PC (Val (Word 256))] (ExecOp (Add Signed)) [Reg PC (Val (Word 308)), Imm (Word (-52))] [R
+     eg SpecPC (Val (Word 308)), Loc (Word 304)]]
+     []
+     []
+     []
+     [Trans [Reg R11 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (
+     Word 0))] [Loc (Word 256)], Trans [Reg R28 (Val (Word 0))] (ExecOp (Add Signed)) [Reg R9 (V
+     al (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 260)], Trans [Reg R29 (Val (Word 0))] (Exec
+     Op (Sub Signed)) [Reg R9 (Val (Word 0)), Reg R9 (Val (Word 0))] [Loc (Word 264)]]
+     []
+     []
+
+
+
+Tips
+~~~~~
+
+	* Without I/O its hard to tell if your program is computing the correct           result.  One solution is to use an IO call with a special number to 
+          indicate success or failure:
+
+			if (yabba) printf(0,999);
+                        else printf(0,666);
+         Our models typically crash shortly after they encounter the printf 
+         trap.  However, you can look at the last few retired instructions for 
+         the number "999".
+
+	* Another interaction between the lack of I/O and your model may 
+          arise when implementing optimizations such as superscalar 
+          execution, or speculative execution.  Notice that in the example in 
+          the previous section I padded the program with a number of "nops".  
+          This way, if the model is aggressively fetching into the program
+          it won't find the end of the file or a system call that you've 
+          placed into the the source based on the trick in the previous bullet.
+
+        * If your model doesn't support the entire instruction set, then you 
+          won't be able to use a compiler directly.  For example, to test the 
+          P6 model (which doesn't support memory), I run the C to Hawk 
+          compiler , remove memory reads and writes from the assm., and then 
+          run the assembler.

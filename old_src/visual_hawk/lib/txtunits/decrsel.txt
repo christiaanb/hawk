@@ -1,0 +1,4 @@
+delta :: Signal Int -> Signal Int -> Signal Int
+
+Chooses the first argument is non-zero, else the second. Whichever is chosen is
+decremented in the result.

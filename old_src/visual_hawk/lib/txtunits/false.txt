@@ -1,0 +1,3 @@
+false :: Signal Bool
+
+A signal emitting the constant False on each clock tick.

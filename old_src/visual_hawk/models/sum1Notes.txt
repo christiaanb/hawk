@@ -1,0 +1,22 @@
+-- this program performs 5+4+3+2+1 and leaves the result(15) in R1 (and R3)
+
+sum' = 
+((((64, 1023), 
+[
+(64, 64, ImmIns (ALUImm (Hawk.Add Hawk.Signed)) R1 R0 0), 	-- R1 <- 0
+(65, 65, ImmIns (ALUImm (Hawk.Add Hawk.Signed)) R2 R0 5), 	-- R2 <- 5
+								-- loop begins
+(66, 66, ImmIns BEQZ R0 R2 12), 				-- if (R2==0) goto 67+12/4=70
+(67, 67, RegReg ALU (Hawk.Add Hawk.Signed) R1 R1 R2), 		-- R1 <- R1 + R2
+(68, 68, ImmIns (ALUImm (Hawk.Sub Hawk.Signed)) R2 R2 1), 	-- R2 <- R2 - 1
+(69, 69, Jmp J ((-16))), 					-- goto (70-16/4=66)
+								-- loop ends
+								-- infinite loop
+(70, 70, ImmIns (ALUImm (Hawk.Add Hawk.Signed)) R3 R1 0), 	-- R3 <- R1
+(71, 71, Jmp J ((-8))), 					-- goto (72-8/4=70)
+(72, 1023, Nop)]), 						-- No_op 
+((0, 16383), 
+ [(0, 63, 0), (1024, 16383, 0)])), 
+256)
+
+

@@ -1,0 +1,1 @@
+((((64,1023),[(64,64,ImmIns (ALUImm (Add Signed)) R1 R0 1),(65,65,ImmIns (ALUImm (Add Signed)) R2 R0 7),(66,66,ImmIns BEQZ R0 R2 12),(67,67,RegReg ALU (Mult Signed) R1 R1 R2),(68,68,ImmIns (ALUImm (Sub Signed)) R2 R2 1),(69,69,Jmp J ((-16))),(70,70,ImmIns (ALUImm (Add Signed)) R3 R1 0),(71,71,Jmp J ((-8))),(72,1023,Nop)]),((0,16383),[(0,63,0),(1024,16383,0)])),256)

@@ -1,0 +1,4 @@
+readWriteHazard :: Register a => Signal (Trans a) -> Signal (Trans a) -> Signal Bool
+
+Returns True when the inputs are a write and read respectively. Used to
+detect data hazards of a write is immediately followed by a read.

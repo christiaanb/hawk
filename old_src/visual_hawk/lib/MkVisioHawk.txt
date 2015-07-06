@@ -1,0 +1,29 @@
+{-
+
+/HaskellDirect/0.15/ihc.exe -i/HaskellDirect/0.15/imports -foleview-input -fcom -fno-gen-binary-interface -fexport-with-tysig -fno-library-ids -fexport-abstractly -fappend-interface-short-name -fno-qualified-instance-methods -fno-gen-variant-instances -fmaybe-optional-params --hugs -fignore-source-interfaces --tlb VisioHawk.dll -o VisioHawk.hs
+
+Clean up with:
+
+|tr -d '\15'
+|sed '/needPrims_hugs 2/d'
+|sed '/LPVISIO/d'
+|sed 's/Automation.\([a-zA-Z]*Array\)/\1/g'
+|sed 's/outIUnknown/outIDispatch/g'
+
+Change outIDispatch back to outIUnknown for some functions.
+
+Add SafeArray hack
+
+Delete followHyperlink
+Delete addToFavorites
+Delete pointAndDerivatives and method6
+
+-}
+
+-- Begin Hacked up version (tdn)
+data SafeArray a = SafeArray
+outSafeArray = Prelude.undefined
+inSafeArray = Prelude.undefined
+
+-- End Hacked up version (tdn)
+

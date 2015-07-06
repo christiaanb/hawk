@@ -1,0 +1,3 @@
+ilpData :: Register a => Signal (Trans a) -> Signal (Trans a)
+
+Data cache initialized for the ILP program.

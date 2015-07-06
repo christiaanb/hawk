@@ -1,0 +1,70 @@
+sum_ss_imem :: Signal PC  -> Signal Int -> (Signal [DLXTrans],Signal PC )
+ilp_ss_imem :: Signal PC -> Signal Int -> (Signal [DLXTrans],Signal PC)
+no_ilp_ss_imem :: Signal PC -> Signal Int -> (Signal [DLXTrans],Signal PC)
+sum_imem :: Signal PC -> (Signal DLXTrans,Signal PC)
+ilp_imem :: Signal PC -> (Signal DLXTrans,Signal PC)
+no_ilp_imem :: Signal PC -> (Signal DLXTrans,Signal PC)
+sum_dmem :: Register a => Signal (Trans a) -> Signal (Trans a)
+ilp_dmem :: Register a => Signal (Trans a) -> Signal (Trans a)
+no_ilp_dmem :: Register a => Signal (Trans a) -> Signal (Trans a)
+rf :: Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+
+
+delay :: Default a => Signal a -> Signal a
+pipeReg :: Register a => Signal PipeRegCmd -> Signal (Trans a) -> Signal (Trans a)
+
+
+
+input :: Signal PipeRegCmd
+stall :: Signal PipeRegCmd
+kill :: Signal PipeRegCmd
+empty :: Signal [a]
+true :: Signal Bool
+false :: Signal Bool
+
+
+lastpc :: Signal [a] -> Signal a
+before :: Signal Int -> Signal Int
+rmNops :: Register a => Signal [Trans a] -> Signal [Trans a]
+
+predict :: Signal [DLXTrans] -> Signal [DLXTrans]
+findTraps :: Signal DLXTrans -> Signal DLXTrans
+
+btb :: Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+anno :: Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+
+delta :: Signal St -> Signal St -> Signal St
+
+iLen :: Signal Byte -> Signal St
+gamma :: Signal St -> Signal Bool
+
+
+mux :: Signal Bool -> Signal a -> Signal a -> Signal a
+
+bypass :: Register a => Signal (Trans a) -> Signal (Trans a) -> Signal (Trans a)
+bypassTrans :: Register a => Signal (Trans a) -> Signal [Trans a] -> Signal (Trans a)
+
+isBranch :: Register a => Signal (Trans a) -> Signal Bool
+isLoad :: Register a => Signal (Trans a) -> Signal Bool
+isExecTrans :: Register a => Signal (Trans a) -> Signal Bool
+modifiesPC :: Register a => Signal (Trans a) -> Signal Bool
+mispredicted :: Signal DLXTrans -> Signal Bool
+
+neq0 :: Num a => Signal a -> Signal Bool
+rawHazard :: Register a => (Signal (Trans a),Signal (Trans a)) -> Signal Bool
+
+sAND :: Signal Bool -> Signal Bool -> Signal Bool
+sOR :: Signal Bool -> Signal Bool -> Signal Bool
+
+exec :: Register a => Signal (Trans a) -> Signal (Trans a)
+decr :: Signal Int -> Signal Int
+
+
+bundle2L :: Signal a -> Signal a -> Signal [a]
+
+rob :: Register a => (Signal [Trans a],Signal [Trans (VirtualReg a Int)]) -> (Signal [Trans a],Signal [Trans (VirtualReg a Int)],Signal Int,Signal Bool)
+rs :: Register a => (Signal Bool,Signal [Trans (VirtualReg a Int)]) -> Signal [Trans (VirtualReg a Int)]
+
+
+
+

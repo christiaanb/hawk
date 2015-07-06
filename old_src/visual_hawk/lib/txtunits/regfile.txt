@@ -1,0 +1,4 @@
+regFile :: 
+  Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+
+A register file. The first input is for read requests, the second for a write.

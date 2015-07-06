@@ -1,0 +1,1 @@
+no_ilp_dmem :: Register a => Signal (Trans a) -> Signal (Trans a)

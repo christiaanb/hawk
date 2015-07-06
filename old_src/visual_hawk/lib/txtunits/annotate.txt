@@ -1,0 +1,3 @@
+annotate :: Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+
+If the control argument is a speculative write to the PC, the second argument is annotated with that value.

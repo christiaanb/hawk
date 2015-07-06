@@ -1,0 +1,4 @@
+iLen :: Signal Byte -> Signal Int
+
+Provides the length of the instruction on the assumption that this byte is the
+start of a new instruction.

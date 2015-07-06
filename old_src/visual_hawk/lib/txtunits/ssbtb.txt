@@ -1,0 +1,8 @@
+
+ssBTB :: Signal [Trans] ->    -- fetched transactions
+         Signal [Trans] ->    -- retired transactions
+
+
+         Signal [Trans]   -- transactions with branch predictions
+
+Super scalar branch target buffer. If the last instruction on any clock cycle is a conditional branch, its speculative field is filled with a branch prediction.

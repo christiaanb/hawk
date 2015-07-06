@@ -1,0 +1,4 @@
+alu :: Register a => 
+       Signal (Trans a) -> Signal (Trans a)
+
+An Arithmetic and Logic Unit able to compute the outcome of DLX instructions.

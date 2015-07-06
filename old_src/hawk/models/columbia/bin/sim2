@@ -1,0 +1,3 @@
+#!/bin/sh
+
+runhawk -h9999999 Main $*

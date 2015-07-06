@@ -1,0 +1,1 @@
+no_ilp_ss_imem :: Signal PC -> Signal Int -> (Signal [DLXTrans],Signal PC)

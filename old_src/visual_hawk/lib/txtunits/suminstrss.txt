@@ -1,0 +1,4 @@
+
+sumInstrSS :: Signal PC  -> Signal Int -> (Signal [DLXTrans],Signal PC )
+
+Super scalar instruction cache initialized to the sum program.

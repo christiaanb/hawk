@@ -1,0 +1,14 @@
+#!/bin/csh
+
+sleep 2
+
+echo > die
+chmod a+rx die
+
+cd Probes
+
+
+foreach file (*)
+	sleep 1
+	../bin/see-probe $file ../die &
+end

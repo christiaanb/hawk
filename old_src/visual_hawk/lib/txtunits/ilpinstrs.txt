@@ -1,0 +1,3 @@
+ilpInstrs :: Signal PC -> (Signal DLXTrans,Signal PC)
+
+Instruction cache initialized to the ILP program.

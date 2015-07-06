@@ -1,0 +1,7 @@
+#!/bin/sh
+
+make
+st=$?
+if [ $st = 0 ]; then
+	bin/simulate $*
+fi

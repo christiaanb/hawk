@@ -1,0 +1,22 @@
+     [
+        oa_addi R2 R0 7      P1 2         -- 1
+       ,oa_addi R1 R0 1      P1 1      
+       ,oa_nop
+
+       ,oa_ne2 P2 P3 R2 R0   P1 2
+       ,oa_nop
+       ,oa_nop
+
+       ,oa_fence 0                        -- 7
+       ,oa_fence 1
+       ,oa_fence 2
+
+       ,oa_mult R1 R1 R2     P2 1         -- 10
+       ,oa_subi R2 R2 1      P2 2         
+       ,oa_j 4               P2 3 
+
+       ,oa_nop                            -- 13
+       ,oa_addi R3 R1 0      P3 0        
+       ,oa_j 13              P3 1         
+
+       ]

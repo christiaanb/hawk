@@ -1,0 +1,4 @@
+sumData :: Register a => 
+           Signal (Trans a) -> Signal (Trans a)
+
+Data cache initialized to data for the sum program.

@@ -1,0 +1,20 @@
+
+  Windows compatability instructions
+  send questions to Byron Cook (byron@cse.ogi.edu)
+  --------------------------------------------------------------------
+
+  Hawk can be used in Windows NT, and might work with other 32-bit 
+  Windows flavors.  
+
+  * Set the HAWKROOT environment variable 
+    (in control-panel/system/environment)
+    When setting HAWKROOT, use a DOS/Windows pathname. 
+    For example: HAWKROOT=C:\HAWK
+
+  * You will need to install cygwin, available from:
+	http://sourceware.cygnus.com/cygwin/
+    Be sure that the bin directories are in the global path.
+
+  * Put %HAWKROOT%/win32 in your global path (again. control-panel/system/env)
+
+  * you should be all set.  start up a command window and type "hawk Hawk"

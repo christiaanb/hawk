@@ -1,0 +1,14 @@
+add predicate writing branch
+change bundleList to bundle
+prepare to branch
+forward predicate info to sources at last min.
+add fast predicate reduction 
+latency info
+set up ERegister and PRegister as seperate classes
+recast licence as dynamic br. delay slot
+what does "creating PCs" do to the Fence and Licence?
+faster forwarding QUEUE
+assert ERR if mem op raises exception (or something else that is sinsable
+    in the absence of OS support)
+replace FENCE with SYNC instruction
+place EXPLICIT MEM HEIR. INFORMATION in instructions

@@ -1,0 +1,3 @@
+predict :: Signal [DLXTrans] -> Signal [DLXTrans]
+
+Annotates lists of transactions with their speculative PC values

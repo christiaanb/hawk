@@ -1,0 +1,29 @@
+#!/bin/sh
+
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     echo "HAWKROOT environment variable not set"
+     exit
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+
+
+. $HAWKROOT/simulation/bin/intro
+. $HAWKROOT/simulation/bin/common
+
+
+# WOW!!! BITCHIN HACK FROM HELL.  HUGS doesnt allow
+# filter commands > 100 chars, so guess what?
+F="$TDIR/pp.$$"
+$CP $HAWKROOT/simulation/bin/pp $F
+# its less likely to be so now...
+
+$HUGS -w -F"$SH $F" -P"::$HAWKLIB:$DLXLIB:$OA64LIB" $HUGSARGS $*
+
+
+$RM -f $F

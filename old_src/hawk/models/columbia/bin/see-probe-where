@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "kill $$" >> $2
+exec xterm -title $1 -fn 6x10 -geom $3 -e vi $1 

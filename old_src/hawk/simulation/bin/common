@@ -1,0 +1,33 @@
+#!/bin/sh
+
+
+if [ "X$HAWKROOT" = "X" ] ; then
+     echo "HAWKROOT environment variable not set"
+     exit
+fi
+
+if [ ! -d $HAWKROOT ] ; then
+   echo "ERROR: Directory $HAWKROOT not found"
+   exit 1
+fi
+
+. $HAWKROOT/simulation/lib/unix_environment
+
+
+TMPF=$TDIR/foo$$.sh
+$HAWKROOT/simulation/bin/make2sh \
+           $HAWKROOT/simulation/lib/haskell_environment > $TMPF
+. $TMPF
+$RM -f $TMPF
+
+export EDITOR
+
+
+HAWKCONFIG=$HAWKROOT/simulation/lib/Config.mk
+
+if [ -r .hugsargs ]; then
+    HUGSARGS=`$CAT .hugsargs`
+else
+    HUGSARGS=
+fi
+

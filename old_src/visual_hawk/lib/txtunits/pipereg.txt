@@ -1,0 +1,7 @@
+pipeReg :: Register a =>
+       Signal PipeRegCmd -> Signal (Trans a) -> Signal (Trans a)
+
+A richer form of delay which includes a command input. On each clock tick, the behavior is as follows for each value of the command
+  Okay  -> emits previously stored value, stores next input value
+  Kill  -> emits default value, stores next input value
+  Stall -> emits stored value, retains stored value

@@ -1,0 +1,3 @@
+ilpInstrSS :: Signal PC -> Signal Int -> (Signal [DLXTrans],Signal PC)
+
+Super scalar instruction cache initialized to the ILP program.

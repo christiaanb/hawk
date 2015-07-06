@@ -1,0 +1,1069 @@
+<TITLE>Hawk Module Signatures</TITLE>
+<BODY BGCOLOR='#ffffff' LINK='#003162' 
+ VLINK='#CC3333' TEXT='#000000'>
+<H4>Hawk Module Signatures</H4>
+<font size=2>
+<HR>
+<H5>Arithmetic</H5>
+<PRE>
+
+The Arithmetic module defines the datatype "AluOp" to represent the
+various sorts of operations you might pass to an ALU like circuit.
+The "Instruction" class defines its methods to use AluOp as the
+least-common denomiator (no pun intended) of arithmetic-based instructions.
+
+
+
+type Immediate = Int
+
+data Sign = Signed 
+          | Unsigned
+      deriving (Eq,Show, Read)  
+
+data Comparison = LessThan 
+                | LessEqual 
+                | GreaterThan 
+                | GreaterEqual 
+                | Equal 
+                | NotEqual
+             deriving (Eq,Show, Read)  
+
+data AluOp        = Add Sign |
+                  Sub Sign |
+                  Mult Sign |
+                  Div Sign |
+                  And |
+                  Not |
+                  Or | Xor |
+                  Sll | Srl | Sra |
+                  S Comparison |
+                  SetHi |               -- Set high 16 bits of value.
+                  Input1 |              -- pass input1 through
+                  Input2 |              -- pass input2 through
+                  Invalidate            -- Invalidate the result of the
+                                        --  ALU operation 
+                  deriving (Eq,Show, Read)   
+
+
+data ImmediateSize = Imm16Bits | Imm26Bits
+
+alu :: Word w => AluOp -> w -> w -> Maybe w
+
+</PRE>
+
+<HR>
+<H5>Cell</H5>
+<PRE>
+{-
+
+Cells are intended to be used to represent the source and destination
+operands in machine instructions.  Consider, for example:
+	
+	r1=? <- r20=15 + 8
+
+Here the first cell (r1=?) is a register reference, and its value is
+not known yet.  The source cell r20=15 is a register reference with 
+its value calculated.  8 is the other source operand --- in this 
+case a constant.  The Cell class hopes to capture this notion, while
+allowing you freedom to define richer Cell-like structures.
+
+The Cell's interface supports register references, constants,
+PCs, speculative PCs and predicates.
+
+See the DLX_Cell module for a concrete instance
+
+Currently several of the Cell methods overlap with each other ---- 
+Eventually we will slim the methods to the minimum set.
+-}
+
+
+class Cell c where
+
+  -- return a PC register reference with no value
+  pcNothing	:: (Register r,Word w) => c r w
+
+  -- return the value within the cell (undefined if no value exists)
+  getVal	:: (Register r,Word w) => c r w -> w
+
+  -- update the value within the cell
+  putVal	:: (Register r,Word w) => c r w -> Maybe w -> c r w
+
+  -- place the cell in an invalid state 
+  invalidate   	:: (Register r,Word w) => c r w -> c r w
+
+  -- is the cell a register reference?
+  isReg		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell a PC register reference?
+  isPC		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell a speculative PC register reference?
+  isSpecPC	:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell indicates a location in memory?
+  isLoc		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell  a constant value?
+  isVal		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell in an invalide state?
+  isInv		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the value of the cell is known?
+  --    isVal (r2=6) = True
+  --    isVal (r2=?) = False
+  isAss		:: (Register r,Word w) => c r w -> Bool
+
+  -- is the cell a predicate register reference?
+  isPred	:: (Register r,Word w) => c r w -> Bool
+
+  -- has the value been calculated?  (ie. isAss || isInv)
+  isComputed	:: (Register r,Word w) => c r w -> Bool
+
+  -- are the two cells both refering to the same register?
+  sameLoc	:: (Register r,Word w) => c r w -> c r w -> Bool
+
+  -- true if sameLoc is true and neither cell is invalid
+  cellHazard	:: (Register r,Word w) => c r w -> c r w -> Bool
+
+  -- get the register reference
+  getReg        :: (Register r,Word w) => c r w -> r
+
+  -- construct a cell with a memory reference
+  loc           :: Word w => w -> c r w
+
+  isPred x = False
+
+</PRE>
+
+<HR>
+<H5>Devices</H5>
+<PRE>
+{- 
+   Devices defines common circuits (for example ,instruction 
+   and data memory or alus) 
+-}
+
+-- flush k x b s , when b then return x for k cycles, otherwise s
+-- flush 2 10 <False,False,True,False,False,False,False .. > <1 .. 7 .. >
+--        = <1,2,10,10,5,6,7 .. >
+flush       :: Int -> a -> Signal Bool -> Signal a -> Signal a
+
+-- latch x b xs. return the value of xs when last b occurred.  initialize
+-- with x
+latch       :: a -> Signal Bool -> Signal a -> Signal a
+
+
+
+regFile     :: Ix i  => (i,i) ->      -- Register addresses
+                        [a] ->                   -- Initial contents
+                        [(Signal Bool,           -- Write enables
+                        (Signal i,Signal a))] -> -- Write ports
+                        [Signal i] ->            -- Read ports
+                        [Signal a]               -- Read port contents
+
+
+dataMemory :: (Word a, Word b) => a -> ArrayDesc a b ->
+              Signal LoadStoreOp -> Signal a -> Signal b -> Signal b
+
+
+-- fetch (k,translate,max,memory) pc width = (instrs,pc')
+--   k = the number of indices between addresses.  
+--   translate = the function that creates transaction from
+--               the representation in memory
+--   max = the largest number of instructions to fetch on 
+--         a single cycle
+--   memory = the program
+--   pc = the pc to fetch
+--   width = the number of instructions to fetch starting at pc
+fetch  :: (Cell c, Register r, Word w, Instruction i) =>
+          (w,f -> Trans i (c r w),Int,ArrayDesc w f) ->       
+          Signal (Trans i (c r w)) -> Signal Int ->       
+          (Signal [Trans i (c r w)],Signal (Trans i (c r w)))
+
+
+-- trans_alu is alu applied to transactions in the obvious way:
+-- intuitively,   
+--  trans_alu(Trans [dst] op [s1,s2]) = Trans [dst=alu(op,s1,s2)] op [s1,s2]
+trans_alu :: (Register r, Cell c, Word w, Instruction i) => 
+             (Trans i (c r w)) -> (Trans i (c r w))
+
+--- exec is trans_alu lifted on signals
+exec :: (Register r, Cell c, Word w, Instruction i) => 
+        Signal (Trans i (c r w)) -> Signal (Trans i (c r w))
+
+
+-- mem serves loads and stores
+mem :: (Instruction i, Cell c, Register r,Word w) => 
+       w -> ArrayDesc w w ->
+       Signal (Trans i (c r w)) -> Signal (Trans i (c r w))
+
+ss_mem :: (Instruction i, Cell c, Register r, Word w) => 
+       w -> ArrayDesc w w -> 
+       Signal [Trans i (c r w)] -> Signal [Trans i (c r w)]
+
+
+
+</PRE>
+
+<HR>
+<H5>Hawk</H5>
+<PRE>
+</PRE>
+
+<HR>
+<H5>HawkIO</H5>
+<PRE>
+{-
+Given a filename, and function from a memory state and a starting point to a 
+an output, "hawkMain" will open the file and parse it and apply the
+function to it.
+-}
+
+
+hawkMain :: (Read a,Read w) => String -> ((MemoryState w a,w) -> IO b) -> IO b
+</PRE>
+
+<HR>
+<H5>Init</H5>
+<PRE>
+{-
+
+Very often, particularily when operating over pointed domains, each
+type has a particular value that serves well as an inital state. 
+The Init class picks that value out.  For example, the "def" value
+for lists is "[]"
+
+-}
+
+class Init a where
+   def :: a
+
+instance Init [a]
+instance Init (Maybe a)
+instance Init Int
+instance Init Bool
+
+
+-- delay a signal using the type's default value as the initializer
+del :: Init a => Signal a -> Signal a
+
+
+</PRE>
+
+<HR>
+<H5>Instruction</H5>
+<PRE>
+
+{- 
+
+While not knowing the details of a particular instruction set, the
+Instruction class allows code defined in arithmetic and other
+modules to do the right thing for the often-defined instructions.
+
+-}
+
+
+class (Show i, Eq i) => Instruction i where
+   
+   -- is a nop instruction?
+   isNoOp :: i -> Bool
+
+   -- is an add instruction?
+   isAddOp :: i -> Bool
+   isSubOp :: i -> Bool
+   isMultOp :: i -> Bool
+   isDivOp :: i -> Bool
+   isJumpOp :: i -> Bool
+   isMemOp :: i -> Bool
+   isLoadOp :: i -> Bool
+   isStoreOp :: i -> Bool
+   isAluOp  :: i -> Bool
+   isCmpOp  :: i -> Bool
+   isBoolOp  :: i -> Bool
+   isMoveOp :: i -> Bool
+
+   -- map the instruction to an AluOp (undefined if not isAluOp)
+   aluOp :: i -> AluOp 
+
+   -- is a conditional instruction?
+   isCond :: i -> Bool
+
+   -- is a parallel instruction? 
+   -- example:  [r1,r2] <- SWAP [r1,r2] can be mapped two instruction
+   isPar :: i -> Bool
+   -- get the first instruction (if isPar)
+   fstOp :: i -> AluOp
+   -- get the second instruction (if isPar)
+   sndOp :: i -> AluOp
+
+   memOp :: i -> LoadStoreOp
+
+   noOp :: i
+
+</PRE>
+
+<HR>
+<H5>Memory</H5>
+<PRE>
+
+{- 
+   Some types to describe encodings of memory state and the 
+   communication to memory
+-}
+
+type ArrayDesc i v = ((i,i),[(i,i,v)])
+
+type InstrMemoryState w i = ArrayDesc w i
+
+type MemoryState w i = (InstrMemoryState w i,DataMemoryState w)
+
+type DataMemoryState w = ArrayDesc w w
+
+data WordSize = Byte | HalfWord | FullWord
+          deriving (Eq,Show, Read)
+
+data LoadStoreOp = Load WordSize Sign
+                 | Store WordSize 
+                 | NOP  -- No operation
+           deriving (Eq,Show, Read)
+
+
+
+-- Array request
+data ArrReq i a  = ReadArr i |
+		   WriteArr i i a |
+		   WriteFn i (a -> a) |	-- modify contents at location i
+		   FreezeArr
+		   deriving Show
+
+-- Array response
+data ArrResp i a = ReadVal a |
+		   Written |
+		   WrittenFn a |
+		   ArrayVal (Array i a)
+		   deriving Show
+
+</PRE>
+
+<HR>
+<H5>PipeReg</H5>
+<PRE>
+
+{- 
+  pipeReg is helpful for constructing in pipelines 
+-}
+
+data PipeRegCmd = Input | Stall | Kill
+                  deriving (Eq,Ord,Enum,Bounded,Show)
+
+
+-- pipeReg t cmd ts , on the first cycle return "t", in later cycles,
+-- if cmd=Input then return ts, if cmd=Stall then return the previous
+-- value and store the input, if cmd=Kill then return a nop
+
+pipeReg :: (Instruction a, Register b) => 
+           Trans a (c b d) -> Signal PipeRegCmd -> 
+           Signal (Trans a (c b d)) -> Signal (Trans a (c b d))
+
+input           :: Signal PipeRegCmd
+
+stall           :: Signal PipeRegCmd
+
+kill            :: Signal PipeRegCmd
+
+</PRE>
+
+<HR>
+<H5>PreludeSig</H5>
+<PRE>
+</PRE>
+
+<HR>
+<H5>Probe</H5>
+<PRE>
+
+{- 
+   In practice it is nice to be able to place a probe on a signal.
+   Suppose that "s" is a signal.  'probe "s.output" s' has the
+   same meaning as 's' --- but s's contents have been written to 
+   the file "s.output".   This function has turned out to be
+   critical in the development of the Visio Hawk interface.
+
+   Some issues to consider:
+        * probe is a hack --- and it messes with referential 
+          trancparency.  Some Haskell compilers may wreak havoc with
+          probes.  
+	* probe is pretty careful not to change the strictness
+          behavior.
+        * Avoid using probes within unit definitions.  If you duplicate
+          the use of the unit, the output file will be written to 
+          simultaniously by both units instantiations.  Try using probe
+          only at the top-level of your microarchitecture.
+        * Probes are typically stored in a subdirectory "Probes/"
+-}
+   
+
+class Show a => Probe a where
+  probe :: String -> Signal a -> Signal a
+  outp :: a -> String
+  probe n (List vals) = List (zipWith (dataOut n) [1..] vals)
+  outp = show
+
+-- tries to do the right thing in the case of UNIX or Microsoft Windows
+clearProbes :: IO()
+
+-- clear the probes subdirectory in UNIX
+clearProbes_UNIX :: IO ()
+
+-- clear the probes subdirectory in Microsoft
+clearProbes_MS :: IO ()
+
+instance (Show a,Show b) => Probe (a,b)
+instance (Show a,Show b,Show c) => Probe (a,b,c)
+instance Probe Bool
+instance Probe Int
+instance Probe Word32
+instance Probe Word64
+instance Probe Char
+instance Probe a => Probe (Maybe a)
+instance (Probe a, Probe b) => Probe (Virtual a b )
+instance Probe PipeRegCmd
+instance Probe AluOp
+
+
+</PRE>
+
+<HR>
+<H5>Register</H5>
+<PRE>
+{- 
+
+   Register captures the common instances and methods that is 
+   usually required of a register-set like type.  Register 
+   supports PCs, speculative PCs, and predicate registers.
+
+-}
+
+
+class (Ix a,Eq a,Ord a,Bounded a,Show a,Read a,Enum a) => Register a where
+
+        -- is the register read only?   for example, in DLX 
+        --  r0 <- r0 + r0  is equivilant to a nop because r0 is read only
+        readOnly :: a -> Bool
+
+        -- pick out the PC register
+        pc :: a 
+
+        -- pick out the speculative PC register
+        specpc :: a 
+
+        ispc :: a -> Bool
+        isspecpc :: a -> Bool 
+
+        -- is the register a predicate register?
+        ispred :: a -> Bool
+
+        readOnly x = False
+        ispred x = False
+
+</PRE>
+
+<HR>
+<H5>STEx</H5>
+<PRE>
+
+{-
+  STEx synthesizes the state and exception monads.  
+-}
+ 
+
+data STEx s a
+
+instance Monad (STEx s)
+instance MonadZero (STEx s)
+instance MonadPlus (STEx s)
+
+-- c `handle` x, return x if c raises an exception
+handle :: STEx a b -> b -> ST a b
+
+-- lift an exception or st monad thing or into STEx
+liftEx :: Maybe a -> STEx s a
+
+liftST :: ST s a -> STEx s a
+
+-- raise an exception if Bool is False
+assert :: Bool -> STEx s ()
+
+-- the following functions have the same meaning as their corresponding
+-- state monad functions
+readVarSTEx :: MutVar a b -> STEx a b
+writeVarSTEx :: MutVar a b -> b -> STEx a ()
+newVarSTEx :: a -> STEx b (MutVar b a)
+
+readArraySTEx :: Ix b => MutArr a b c -> b -> STEx a c
+writeArraySTEx :: Ix b => MutArr a b c -> b -> c -> STEx a ()
+newArraySTEx :: Ix a => (a,a) -> b -> STEx c (MutArr c a b)
+
+</PRE>
+
+<HR>
+<H5>Signal</H5>
+<PRE>
+{-
+  In essence Hawk is Haskell with built-in Lustre-like signals.  The
+  rest are libraries built upon this structure.  In the event of
+  circuit synthesis, the Signal type and its operators represent
+  the residule of elaboration (partial-evaluation).
+-}
+
+data Signal a
+
+infix  4 *==, */=, *<, *<=, *>=, *>
+infixr 3 *&&
+infixr 2 *||
+infixr 5  *:, *++
+infixl 9 `at`
+infixr 0 `delay`
+infixr 0 `before`
+
+at     :: Signal a -> Int -> a
+
+-- [1,3,2] `before` <10 .. > = <1,3,2,10 .. >
+before :: [a] -> Signal a -> Signal a
+
+-- loop s f, apply f to s at each cycle, saving the state....
+loop   :: Signal a -> (a -> ST st c)-> ST st (Signal c)
+
+view   :: Signal a -> [a]
+
+-- delay x <x1,x2 .. >  = <x,x1,x2 .. >
+delay  :: a -> Signal a -> Signal a
+
+
+-- if,then,else lifted on signals...
+cond   :: Signal Bool -> Signal a -> Signal a -> Signal a
+
+
+-- apply a function pointwise to a signal
+lift0  :: a -> Signal a 
+
+lift1  :: (a -> b) -> Signal a -> Signal b
+
+lift2  :: (a->b->c)          -> Signal a -> Signal b -> Signal c
+
+lift3  :: (a->b->c->d)       -> Signal a -> Signal b -> Signal c -> Signal d
+
+lift4  :: (a->b->c->d->e)    -> Signal a -> Signal b -> Signal c -> Signal d -> Signal e
+
+lift5  :: (a->b->c->d->e->f) -> Signal a -> Signal b -> Signal c -> Signal d -> Signal e -> Signal f
+
+-- make a single signal of tuples out of tuple of signals
+
+bundle2 :: (Signal a,Signal b) -> Signal (a,b)
+
+bundle3 :: (Signal a,Signal b,Signal c) -> Signal (a,b,c)
+
+bundle4 :: (Signal a,Signal b,Signal c,Signal d) -> Signal (a,b,c,d)
+
+bundle5 :: (Signal a,Signal b,Signal c,Signal d,Signal e) -> Signal (a,b,c,d,e)
+
+bundle6 :: (Signal a,Signal b,Signal c,Signal d,Signal e,Signal f) -> 
+           Signal (a,b,c,d,e,f)
+
+bundleList :: [Signal a] -> Signal [a]
+
+-- make a tuple of signals from a signal of tuples
+
+unbundle2 :: Signal (a,b)       -> (Signal a,Signal b)
+
+unbundle3 :: Signal (a,b,c)     -> (Signal a,Signal b,Signal c)
+
+unbundle4 :: Signal (a,b,c,e)   -> (Signal a,Signal b,Signal c,Signal e)
+
+unbundle5 :: Signal (a,b,c,e,d) -> 
+             (Signal a,Signal b,Signal c,Signal e,Signal d)
+
+-- careful using this function.  the size of the list of the input
+-- must be the same at each cycle.
+unbundleList :: Signal [a] -> [Signal a]
+
+
+-- corresponding functions lifted on signals.
+
+(*==)           :: Eq a => Signal a -> Signal a -> Signal Bool
+
+(*/=)           :: Eq a => Signal a -> Signal a -> Signal Bool
+
+(*<)            :: Ord a => Signal a -> Signal a -> Signal Bool
+
+(*<=)           :: Ord a => Signal a -> Signal a -> Signal Bool
+
+(*>)            :: Ord a => Signal a -> Signal a -> Signal Bool
+
+(*>=)           :: Ord a => Signal a -> Signal a -> Signal Bool
+
+(*&&)           :: Signal Bool -> Signal Bool -> Signal Bool
+
+(*||)           :: Signal Bool -> Signal Bool -> Signal Bool
+
+(*++)           :: MonadPlus m => Signal (m a) -> Signal (m a) -> Signal (m a)
+
+(*:)            :: Signal a -> Signal [a] -> Signal [a]
+
+
+instance Eq a => Eq (Signal a)
+instance Ord a => Ord (Signal a)
+instance Enum a => Enum (Signal a)
+instance Bounded a => Bounded (Signal a)
+instance Num a => Num (Signal a)
+instance Real a => Real (Signal a)
+instance Integral a => Integral (Signal a)
+instance Functor Signal where
+
+-- make the trivial superscalar circuit from a scalar circuit by
+-- applying it sequentially (left to right) 
+superscalar :: (Signal a -> Signal b) -> Signal [a] -> Signal [b]
+
+{-
+   The following functions will give different streams for every use ----
+   giving a form of non-determinism.
+
+   NOTE that these functions should be used carefully.  They
+   break referential transparency
+
+-}
+
+ints :: (Int,Int) -> Signal Int
+
+integers :: (Integer,Integer) -> Signal Integer
+</PRE>
+
+<HR>
+<H5>StateArray</H5>
+<PRE>
+</PRE>
+
+<HR>
+<H5>Symbo</H5>
+<PRE>
+</PRE>
+
+<HR>
+<H5>Trans</H5>
+<PRE>
+{-
+
+  We have used Transactions to represent instructions w/ their data.
+  These have been particularly useful in pipelined and out-of-order 
+  superscalar machines.  
+
+-}
+
+data Trans i c = Trans [c] i [c] [c]
+		   deriving (Eq,Show,Read)
+
+
+-- Convention: if Trans d op s i
+-- we say that d is the destination, op is the instruction
+-- s is the source, and i is the information
+
+-- return a nop-like transaction
+nop             :: (Instruction i,Register r) => Trans i (c r w)
+
+
+-- return a PC transaction
+pcTrans         :: (Cell c,Instruction i,Register r, Word w) => 
+                       w -> Trans i (c r w)
+
+
+isNop           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isAdd           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isAlu           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isCmp           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isBool          :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isSub           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isMul           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isDiv           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isJump          :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isMove          :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isMem           :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isLoad          :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isStore         :: (Instruction i,Register r) => Trans i (c r w) -> Bool
+
+isBranch        :: (Cell c,Register r,Word w) => Trans i (c r w) -> Bool
+
+isComputable    :: (Cell c,Register r,Word w) => Trans i (c r w) -> Bool
+
+-- update destination fields
+updDst          :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+-- apply a function to the destination fields
+repDst          :: Register r => (c r w -> c r w -> Bool) ->
+                                 Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+-- add to the destination
+addDst          :: Register r => c r w -> Trans i (c r w) -> Trans i (c r w)
+
+-- get the destination
+getDst          :: Register r => Trans i (c r w) -> [c r w]
+
+-- replace the dest fields
+putDst          :: Register r => Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+
+updSrc          :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+addSrc          :: Register r => c r w -> Trans i (c r w) -> Trans i (c r w)
+
+getSrc          :: Register r => Trans i (c r w) -> [c r w]
+
+putSrc          :: Register r => Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+addInfo         :: Register r => c r w -> Trans i (c r w) -> Trans i (c r w)
+
+getInfo         :: Register r => Trans i (c r w) -> [c r w]
+
+putInfo         :: Register r => Trans i (c r w) -> [c r w] -> Trans i (c r w)
+
+getOp           :: Trans i (c r w) -> i
+
+putOp           :: Trans i (c r w) -> i -> Trans i (c r w)
+
+
+
+-- return the speculative PC from the info area
+getSpecPC       :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Maybe (c r w)
+
+-- return the PC from the destination area
+getDstPC        :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Maybe (c r w)
+getSrcPC        :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Maybe (c r w)
+
+-- return the instructions location from memory from the destination
+-- area
+getLoc          :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Maybe (c r w)
+
+-- get register references
+getSrcRegs      :: (Cell c,Register r,Word w) => Trans i (c r w) -> [r]
+getDstRegs      :: (Cell c,Register r,Word w) => Trans i (c r w) -> [r]
+
+-- get register reference values
+getSrcRegVals   :: (Cell c,Register r,Word w) => Trans i (c r w) -> [w]
+putDstRegVal    :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> w -> Trans i (c r w)
+
+-- evalTrans t (c,w) update the destination fields in t with w if they match
+-- c
+evalTrans       :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> (c r w,Maybe w) -> Trans i (c r w)
+
+-- is there a Read-After-Write hazard between two transactions?
+rawHazard       :: (Cell c,Register r,Word w) => 
+                   (Trans i (c r w),Trans i (c r w)) -> Bool
+
+-- bypass t t2 source operands of t with the dest operands of t2
+-- if the references match.
+
+bypass          :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Trans i (c r w) -> Trans i (c r w)
+
+-- bypass the dest. operands instead of the source operands.
+bypassDst       :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Trans i (c r w) -> Trans i (c r w)
+
+-- bypass with multiple transactions
+bypassMany      :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> [Trans i (c r w)] -> Trans i (c r w)
+bypassDstMany   :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> [Trans i (c r w)] -> Trans i (c r w)
+
+-- bypass to multiple transaction with multiple transactions
+broadcast       :: (Cell a, Register b, Word c) => 
+                   [Trans e (a b c)] -> [Trans e (a b c)] -> [Trans e (a b c)]
+
+--source operands and dest operands all filled in?
+complete        :: (Cell c,Register r,Word w) => 
+                   Trans i (c r w) -> Bool
+
+-- if (x,y) = readyToRetire z, then
+-- x is the lift of transactions that are "complete"
+readyToRetire   :: (Cell c,Register r,Word w) => 
+                   [Trans i (c r w)] -> ([Trans i (c r w)],[Trans i (c r w)])
+
+
+-- if (x,y) = readyToCompute z, then
+-- x is the lift of transactions with all of their source operands filled in
+readyToCompute  :: (Cell c,Register r,Word w) => 
+                   [Trans i (c r w)] -> ([Trans i (c r w)],[Trans i (c r w)])
+
+
+updatePC        :: Register r => c r w -> Trans i (c r w) -> Trans i (c r w)
+
+
+getPredicate   :: (Cell c,Register r,Word w) => Trans i (c r w) -> c r w
+isPredicated   :: (Cell c,Register r,Word w) => Trans i (c r w) -> Bool
+
+evalPredicate  :: (Cell c,Register r,Word w) => Trans i (c r w) -> w
+</PRE>
+
+<HR>
+<H5>TransSig</H5>
+<PRE>
+{- 
+  The functions in TransSig are identical to Trans, except
+  that they have been lifted on Signals
+-}
+
+
+nop		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w))
+isNop		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isAdd		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isAlu		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isCmp		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isBool		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isSub		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isMul		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isDiv		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isJump		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isMem		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isMove		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isLoad		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isStore		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+isBranch	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+updCells	:: (Cell c, Word w, Register r) => 
+                    Signal [c r w] -> Signal [c r w] -> Signal [c r w]
+repCells	:: (Cell c, Word w, Register r) => 
+                    (c r w -> c r w -> Bool) -> 
+		    Signal [c r w] -> Signal [c r w] -> Signal [c r w]
+
+updDst		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+repDst		:: (Instruction i,Cell c,Register r,Word w) => 
+                   (c r w -> c r w -> Bool) ->
+		   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+addDst		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (c r w) -> Signal (Trans i (c r w)) -> 
+                   Signal (Trans i (c r w))
+getDst		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w]
+putDst		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+updSrc		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+addSrc		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (c r w) -> Signal (Trans i (c r w)) -> 
+                   Signal (Trans i (c r w))
+getSrc		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w]
+putSrc		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+
+addInfo		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (c r w) -> Signal (Trans i (c r w)) -> 
+                   Signal (Trans i (c r w))
+getInfo		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w]
+putInfo		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [c r w] -> 
+                   Signal (Trans i (c r w))
+
+getOp		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal i
+putOp		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal i -> 
+                   Signal (Trans i (c r w))
+
+getSpecPC	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal (Maybe (c r w))
+getDstPC	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal (Maybe (c r w))
+getSrcPC	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal (Maybe (c r w))
+getLoc		:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal (Maybe (c r w))
+
+getSrcRegs	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [r]
+getDstRegs	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [r]
+getSrcRegVals	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal [w]
+putDstRegVal	:: (Instruction i,Cell c,Register r,Word w) =>  
+                   Signal (Trans i (c r w)) -> Signal w -> 
+                   Signal (Trans i (c r w))
+bypass		:: (Instruction i,Cell c,Register r,Word w) =>
+                   Signal (Trans i (c r w)) -> Signal (Trans i (c r w)) -> 
+                   Signal (Trans i (c r w))
+bypassDst	:: (Instruction i,Cell c,Register r,Word w) =>
+                   Signal (Trans i (c r w)) -> Signal (Trans i (c r w)) ->
+	           Signal (Trans i (c r w))
+bypassMany	:: (Instruction i,Cell c,Register r,Word w) =>
+                   Signal (Trans i (c r w)) -> Signal [Trans i (c r w)] ->
+		   Signal (Trans i (c r w))
+bypassDstMany	:: (Instruction i,Cell c,Register r,Word w) =>
+                   Signal (Trans i (c r w)) -> Signal [Trans i (c r w)] ->
+		   Signal (Trans i (c r w))
+broadcast ::       (Cell a, Register b, Word c) => 
+                   Signal [Trans e (a b c)] -> Signal [Trans e (a b c)] -> 
+                   Signal [Trans e (a b c)]
+
+
+readyToRetire	:: (Instruction i,Cell c,Register r,Word w) =>
+                   Signal [Trans i (c r w)] -> 
+                   Signal ([Trans i (c r w)],[Trans i (c r w)])
+
+complete	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal Bool
+
+readyToCompute	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal [Trans i (c r w)] -> 
+                   Signal ([Trans i (c r w)],[Trans i (c r w)])
+
+evalTrans	:: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal (Trans i (c r w)) -> Signal (c r w, Maybe w) -> 
+                   Signal (Trans i (c r w))
+
+rawHazard	:: (Instruction i,Cell c,Register r,Word w) => 
+                   (Signal (Trans i (c r w)),Signal (Trans i (c r w))) 
+                   -> Signal Bool
+filterDst	:: (Instruction i,Cell c,Register r,Word w) => 
+                   (c r w -> Bool) -> Signal (Trans i (c r w)) -> 
+	           Signal [c r w]
+
+pcTrans         :: (Instruction i,Cell c,Register r,Word w) => 
+                   Signal w -> Signal (Trans i (c r w))
+
+getPredicate   :: (Cell c,Register r,Word w) => 
+                  Signal (Trans i (c r w)) -> Signal (c r w)
+
+isPredicated   :: (Cell c,Register r,Word w) => 
+                  Signal (Trans i (c r w)) -> Signal Bool
+
+
+evalPredicate   :: (Cell c,Register r,Word w) => 
+                  Signal (Trans i (c r w)) -> Signal w
+
+
+
+</PRE>
+
+<HR>
+<H5>Utilities</H5>
+<PRE>
+
+infixr 1 `catchEx`
+
+catchEx :: Maybe a -> a -> a
+(><) :: (a -> b,c -> d) -> (a,c) -> (b,d)
+
+-- tries to determine if the OS is windows.  Is there a better way
+-- to do this?
+windows :: IO Bool
+
+</PRE>
+
+<HR>
+<H5>VRegister</H5>
+<PRE>
+
+{- 
+  Given two register sets, VRegister facilitates the mapping
+  between them.  See the P6 model for an example of register renaming
+  with VRegister
+-}
+
+data Virtual r v 
+   = Real r
+   | Virtual v (Maybe r)
+        deriving (Read,Show,Ord)
+
+isReal		:: Virtual a b -> Bool
+isVirtual	:: Virtual a b -> Bool
+
+instance (Ix a, Ix b,Bounded a,Bounded b) => Ix (Virtual a b)
+instance (Enum a,Bounded a,Enum b,Bounded b) => Enum (Virtual a b)
+instance (Bounded a,Bounded b) => Bounded (Virtual a b)
+instance (Register a,Register b) => Register (Virtual a b)
+instance Eq Virtual r v
+instance Register Int
+
+
+
+
+</PRE>
+
+<HR>
+<H5>Words</H5>
+<PRE>
+
+{- 
+The Word class captures both the common operations and class instances
+that you would want from words of different sizes.  
+-}
+
+class (Ix w,Num w,Integral w,Bounded w, Eq w) => Word w where
+  --intToWord       :: Int -> w
+  num_half        :: w
+  num_bytes       :: w
+  max_signed      :: w
+  min_signed      :: w
+  max_signed_half :: w
+  sign            :: w -> w
+  unsign          :: w -> w
+  --toWord          :: Integral a => a -> w
+  sign_half       :: w -> w
+
+  --toWord      = intToWord . toInt
+  sign_half n = n `signedModulus` num_half
+
+class Word w => Word2 i w where
+  toWord :: i -> w
+
+instance Word Int
+instance Word Word8
+instance Word Word32
+
+-- This isn't set yet because Word64 is not set to Num in Hugs
+-- instance Word Word64 
+
+</PRE>
+
+</font><HR><BR><PRE>Mon Jan 25 11:16:48 PST 1999</PRE>

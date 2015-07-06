@@ -1,0 +1,3 @@
+sAND :: Signal Bool -> Signal Bool -> Signal Bool
+
+And gate.

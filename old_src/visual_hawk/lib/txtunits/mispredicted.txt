@@ -1,0 +1,5 @@
+mispredicted :: Signal DLXTrans -> Signal Bool
+
+Determines whether its input transaction is a branch instruction that was
+predicted incorrectly. The input needs to have been annotated with the
+speculative value of the PC.

@@ -1,0 +1,3 @@
+isExecTrans :: Register a => Signal (Trans a) -> Signal Bool
+
+Tests whether the input is an ALU transaction.

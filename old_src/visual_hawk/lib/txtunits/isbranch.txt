@@ -1,0 +1,4 @@
+isBranch :: Register a =>
+     Signal (Trans a) -> Signal Bool
+
+Tests whether the input transaction is a branch instruction.

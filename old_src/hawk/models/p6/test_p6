@@ -1,0 +1,9 @@
+#!/bin/sh
+
+n=`./simulate -sample 200 progs/fact.hsk | grep "Reg R3 (Val 5040)" | wc -l`
+if [ $n -gt 1 ] ; then
+     echo "p6 passed"
+else
+     echo "p6 failed"
+fi
+

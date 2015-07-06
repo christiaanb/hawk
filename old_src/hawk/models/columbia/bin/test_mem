@@ -1,0 +1,4 @@
+#!/bin/sh
+
+bin/simulate -sample $1 $2 | grep 'Reg R8 (Val 14)' | wc -l
+

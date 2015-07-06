@@ -1,0 +1,5 @@
+#!/bin/csh
+
+cd Probes
+
+../bin/see-probe $1 ../die &

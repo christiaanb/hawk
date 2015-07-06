@@ -1,0 +1,3 @@
+branchTarget :: Signal DLXTrans -> Signal DLXTrans -> Signal DLXTrans
+
+A buffer-based predictor of the most likely outcome of a branch instruction.

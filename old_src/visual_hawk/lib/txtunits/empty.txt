@@ -1,0 +1,4 @@
+
+empty :: Signal [a]
+
+A constant signal emitting an empty list each clock tick.

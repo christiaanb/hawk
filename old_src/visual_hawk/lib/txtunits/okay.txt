@@ -1,0 +1,4 @@
+okay :: Signal PipeRegCmd
+
+Constant Okay signal each clock tick. Indicates that pipeline register
+should behave normally.

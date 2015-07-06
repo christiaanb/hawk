@@ -1,0 +1,43 @@
+-- this symbolic program calculates x^4 by repeated multiplication
+
+-- R3 <- x
+-- R4 <- 4
+-- R5 is used to count up to 4
+-- R6 accumulates the result (initially it is given the value 1)
+-- recall R0 is hardwired to 0
+-- the final result is placed in R1
+
+r :: ((((SInt,SInt),[(SInt,SInt,Instr DLXReg SInt)]),((SInt,SInt),[(SInt,SInt,SInt)])),SInt)
+r = ((((64,1023),					-- the location of the program
+[(64,64,ImmIns (ALUImm (Add Signed)) R3 R0 (Var "x")),	-- R3 <- R0 + x
+ (65,65,ImmIns (ALUImm (Add Signed)) R4 R0 4),		-- R4 <- R0 + 4
+ (66,66,ImmIns (ALUImm (Add Signed)) R6 R0 1),		-- R6 <- R0 + 1
+ (67,67,ImmIns (ALUImm (Add Signed)) R5 R0 0),		-- R5 <- R0 + 0
+							-- loop begins here
+ (68,68,RegReg ALU (S GreaterEqual) R1 R5 R4),		-- R4 <- R1 >= R5
+ (69,69,ImmIns BNEZ R0 R1 32),				-- if (R1==0) then goto (70+32/4=78)
+ (70,70,Nop),						-- No_op
+ (71,71,RegReg ALU Input1 F2 R6 R0),			-- F2 <- R6 (pass input 1 through)
+ (72,72,RegReg ALU Input1 F3 R3 R0),			-- F3 <- R3
+ (73,73,RegReg ALU (Mult Signed) F2 F2 F3),		-- F2 <- F2 * F3
+ (74,74,RegReg ALU Input1 R6 F2 R0),			-- R6 <- F2
+ (75,75,ImmIns (ALUImm (Add Signed)) R5 R5 1),		-- R5 <- R5 + 1
+ (76,76,Jmp J ((-36))),					-- goto (77-36/4=68) 
+							-- end of loop
+ (77,77,Nop),						-- No_op
+ (78,78,RegReg ALU (Add Signed) R1 R0 R6),		-- R1 <- R0 + R6 (final result)
+ (79,79,Jmp J 4),					-- goto (79+4/4=80) 
+							-- infinite loop
+ (80,80,Nop),						-- No_op
+ (81,81,ImmIns (ALUImm (Add Signed)) R7 R1 0),		-- R7 <- R1 + 0
+ (82,82,Jmp J ((-8))),					-- goto (82-8/4=80)
+ (83,1023,Nop)]),					-- No_op in locations 83 through 1023
+
+((0,16383),						-- data mem (doesn't matter for
+[(0,63,0),(1024,16383,0)])),				--   this program
+							-- memory is 0 through 16383
+							-- loc 0-63 have value 0
+							-- loc 1024-16383 have value 0
+256)							-- initial pc = 64*4=256
+
+

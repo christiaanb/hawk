@@ -1,0 +1,9 @@
+#!/bin/csh
+
+if ($1:e != "s") then
+	echo "filename must end with .s"
+	exit(1)
+endif
+
+set name = $1:r
+/home/byron/hawk-simulation/bin/dlx2hawk.bin /home/byron/hawk-simulation/bin/dlxassm /home/byron/hawk-simulation/bin/reduce $name.s $name.hsk

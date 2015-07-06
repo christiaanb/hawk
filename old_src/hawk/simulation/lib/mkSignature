@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+foreach $file (@ARGV) {
+	open(FILE,$file) || die "cant open $file";
+        $flag = 0;
+	if ($file =~ /([a-zA-Z]*).*/) {$file = $1;}
+	print "<HR>\n";
+	print "<H5>$file</H5>\n<PRE>\n";
+	
+	while ($input = <FILE>) {
+		chop $input;
+		if ($flag) {
+			if ($input =~ /-- End Signature.*/) {
+				$flag = 0;
+			} else {
+				# added NAD, filters out \begin{code}, \end{code}
+				if ((!($input =~ /^\\begin{code}/)) &&
+				    (!($input =~ /^\\end{code}/))) {
+					if ($input =~ /{-(.*)-}/) {$input = $1;}
+					print $input, "\n";
+				}
+                        }
+		} else {
+			if ($input =~ /-- Begin Signature.*/) {
+				$flag = 1;
+			} 
+		}
+	}
+	close(FILE);
+	print "</PRE>\n\n";
+}

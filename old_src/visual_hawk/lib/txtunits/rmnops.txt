@@ -1,0 +1,1 @@
+rmNops :: Register a => Signal [Trans a] -> Signal [Trans a]

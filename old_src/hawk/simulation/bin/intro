@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "Hawk simulation system, Version " `cat $HAWKROOT/simulation/lib/Version`
+echo "     Copyright (c) The Oregon Graduate Institute"
+echo "     Contact: Byron Cook --- byron@cse.ogi.edu"
+echo
+
+

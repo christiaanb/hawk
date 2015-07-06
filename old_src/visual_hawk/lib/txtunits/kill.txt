@@ -1,0 +1,4 @@
+kill :: Signal PipeRegCmd
+
+Emits the constant Kill each clock tick. Indicates that a pipeline register should
+flush its contents and emit a default value.
