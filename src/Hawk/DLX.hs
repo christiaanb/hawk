@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 module Hawk.DLX where
 
 import Data.Default       (Default)
@@ -40,7 +41,7 @@ data JmpOpCode
   deriving (Eq,Show)
 
 type DLX_Cell a  = DLXcell DLXreg a
-type DLX_Trans a = Trans DLXop (DLX_Cell a)
+type DLX_Trans a = Trans 1 2 2 DLXop (DLX_Cell a)
 type DLX_Instr a = Instr DLXreg a
 
 regNothing R0  = Reg R0 (Val 0)
@@ -52,4 +53,3 @@ dlx2trans (ImmIns (LoadStoreImm loadOp@(Load _ _)) dest src offset)
           (MemOp loadOp)
           (regNothing src :> Imm offset :> Nil)
           Nil
-

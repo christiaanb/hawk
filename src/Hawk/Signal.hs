@@ -1,8 +1,7 @@
 module Hawk.Signal where
 
-import Control.Applicative ((<$>), (<*>))
+import CLaSH.Prelude
 import Control.Monad.State (State, runState)
-import CLaSH.Signal        (Signal, register, unbundle)
 
 loop :: s -> Signal a -> (a -> State s b) -> Signal b
 loop iS a f = o

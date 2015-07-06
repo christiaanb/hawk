@@ -41,3 +41,12 @@ instance Cell DLXcell where
   isPC (Reg x _)  = ispc x
   isPC _          = False
 
+  isAss (Reg _ (Val _ )) = True
+  isAss (Imm _ )         = True
+  isAss _                = False
+
+  cellHazard (Reg precReg pRegVal) (Reg followReg fRegVal)
+    | readOnly precReg     = False
+    | precReg == followReg = pRegVal /= Inv && fRegVal /= Inv
+    | True                 = False
+  cellHazard _ _      = False

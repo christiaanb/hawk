@@ -20,3 +20,24 @@ class Cell c where
 
   -- | is the cell a PC register reference?
   isPC :: Register r => c r w -> Bool
+
+  -- | is the value of the cell is known?
+  --
+  -- @
+  -- isVal (r2=6) = True
+  -- isVal (r2=?) = False
+  -- @
+  isAss :: Register r => c r w -> Bool
+
+  -- | is the cell a predicate register reference?
+  isPred :: Register r => c r w -> Bool
+  isPred _ = False
+
+  -- | true if sameLoc is true and neither cell is invalid
+  cellHazard :: (Register r, Eq r, Eq w) => c r w -> c r w -> Bool
+
+  -- | get the register reference
+  getReg :: Register r => c r w -> r
+
+  -- | construct a cell with a memory reference
+  loc :: w -> c r w
