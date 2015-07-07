@@ -18,7 +18,7 @@ class Register a where
 
 ispc :: Register a => a -> Bool
 ispc (preview reg -> (Just PC)) = True
-ispc _                         = False
+ispc _                          = False
 
 pc :: Register a => a
 pc = review reg PC
