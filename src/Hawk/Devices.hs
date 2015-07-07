@@ -1,10 +1,12 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE DataKinds, NoImplicitPrelude, TypeOperators #-}
 module Hawk.Devices where
 
 import CLaSH.Prelude
 import Control.Monad       (guard,when)
 import Control.Monad.State (get,put)
 import Hawk.Cell
+import Hawk.Instruction
+import Hawk.Register
 import Hawk.Signal
 import Hawk.Trans
 import Hawk.Utilities
@@ -41,26 +43,51 @@ updateVec vec updaters =
                           else prevVec
         ) vec updaters
 
--- instrsFetch n convert initContents pcs
---   = (insertPCs curPC $ instructions `bypassList` nextPCTrans, nextPCTrans)
---     where
---       bypassList = liftA2 $ \x y -> zipWith bypass x y
---       instructions = liftA (map convert) $ instrMemory n initContents curPC
---       curPC = liftA (map getpc) pcs
---       nextPCTrans = liftA (map (\x -> pcTrans $ x+n)) curPC
---       getpc t =
---           do reg <- getDstPC t
---              let p = getReg reg
---              let x = getVal reg
---              guard $ isPC p
---              return x
---            `catchEx` (error "instrsFetch: cant find value" )
---       insertPCs pcs l = liftA2 addPCs pcs l
---       addPCs x y = zipWith addPC x y
---       addPC pc (Trans d o s l) = Trans d o s (loc pc +>> l)
 
--- instrMemory sz arrDesc pcAddresses = liftA (map getInstr) arrResp
---   where
---   getInstr (ReadVal instr) = instr
---   arrResp = let y = liftA ( map (\addr -> ReadArr (addr `div` sz))) pcAddresses
---             in stateArray arrDesc y
+instrFetch :: (Cell c, Register r, Instruction o, Num w, Integral w, Eq w,
+              KnownNat dSz, KnownNat sSz, KnownNat oSz, KnownNat n, Eq r,
+              Default (c r w))
+           => w -> (a -> Trans (1 + dSz) sSz oSz o (c r w))
+           -> Vec n a
+           -> Signal (Trans (1 + dSz) sSz oSz o (c r w))
+           -> (Signal (Trans (1 + dSz) sSz oSz o (c r w))
+              ,Signal (Trans (1 + dSz) sSz oSz o (c r w)))
+instrFetch n convert initContents pc = (head <$> x, head <$> y)
+  where
+    (x,y)  = instrsFetch n convert initContents (singleton <$> pc)
+
+
+instrsFetch :: (Cell c, Register r, Instruction o, Num w, Integral w, Eq w,
+                KnownNat dSz, KnownNat sSz, KnownNat oSz, KnownNat n, Eq r,
+                Default (c r w))
+            => w -> (a -> Trans (1 + dSz) sSz oSz o (c r w))
+            -> Vec n a
+            -> Signal (Vec m (Trans (1 + dSz) sSz oSz o (c r w)))
+            -> (Signal (Vec m (Trans (1 + dSz) sSz oSz o (c r w)))
+               ,Signal (Vec m (Trans (1 + dSz) sSz oSz o (c r w))))
+instrsFetch n convert initContents pcs
+  = (insertPCs curPC $ instructions `bypassList` nextPCTrans, nextPCTrans)
+    where
+      bypassList = liftA2 (zipWith bypass)
+      instructions = (map convert) <$> instrMemory n initContents curPC
+      curPC = (map getpc) <$> pcs
+      nextPCTrans = (map (\x -> pcTrans $ x+n)) <$> curPC
+      getpc t =
+        do reg <- getDstPC t
+           let p = getReg reg
+           let x = getVal reg
+           guard $ ispc p
+           return x
+         `catchEx` (error "instrsFetch: cant find value" )
+      insertPCs pcs l = addPCs <$> pcs <*> l
+      addPCs x y = zipWith addPC x y
+      addPC pc (Trans d o s l) = Trans d o s (loc pc +>> l)
+
+instrMemory :: (Integral i, KnownNat n)
+            => i
+            -> Vec n a
+            -> Signal (Vec m i)
+            -> Signal (Vec m a)
+instrMemory sz arrDesc pcAddresses = (map (arrDesc !!)) <$> addrs
+  where
+    addrs = (map (`div` sz)) <$> pcAddresses
