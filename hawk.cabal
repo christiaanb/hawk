@@ -5,7 +5,7 @@ description:         A reimplementation of http://web.archive.org/web/2007092304
                      Using modern GHC/Haskell extensions where appropriate.
 homepage:            http://christiaanb.github.io/hawk
 license:             OtherLicense
-license-file:        HAWK_LICENSE.md
+license-file:        old_src/HAWK_LICENSE.md
 author:              Christiaan Baaij
 maintainer:          christiaan.baaij@gmail.com
 -- copyright:
